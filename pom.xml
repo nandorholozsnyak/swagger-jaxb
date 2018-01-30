@@ -57,20 +57,19 @@
 		</dependency>
 	</dependencies>
 	<scm>
-		<connection>scm:git:git@github.com:redlab/swagger-jaxb.git</connection>
-		<developerConnection>scm:git:git@github.com:redlab/swagger-jaxb.git</developerConnection>
-		<url>git@github.com:redlab/swagger-jaxb.git</url>
+		<connection>scm:git:git@github.com:Andreas-Maier-NTT/swagger-jaxb.git</connection>
+		<developerConnection>scm:git:git@github.com:Andreas-Maier-NTT/swagger-jaxb.git</developerConnection>
+		<url>git@github.com:Andreas-Maier-NTT/swagger-jaxb.git</url>
 	</scm>
 	<name>Swagger JAXB</name>
 	<description>XJC Plugin to add Swagger Annotations to your swagger generated JAXB classes, see github for info</description>
-	<url>https://github.com/redlab/swagger-jaxb</url>
+	<url>https://github.com/Andreas-Maier-NTT/swagger-jaxb</url>
 	<organization>
-		<url>http://www.redlab.be/</url>
-		<name>redlab</name>
+		<name>maiand2</name>
 	</organization>
 	<issueManagement>
 		<system>github issues</system>
-		<url>https://github.com/redlab/swagger-jaxb/issues</url>
+		<url>https://github.com/Andreas-Maier-NTT/swagger-jaxb/issues</url>
 	</issueManagement>
 	<licenses>
 		<license>
@@ -189,9 +188,8 @@
 	<developers>
 		<developer>
 			<name>Andreas Maier</name>
-			<url>https://www.redlab.be</url>
 			<id>maiand2</id>
-			<email>dev@redlab.be</email>
+			<email>andreas.maier.1989@gmail.com</email>
 		</developer>
 	</developers>
 </project>
