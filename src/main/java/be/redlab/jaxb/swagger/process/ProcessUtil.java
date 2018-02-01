@@ -206,6 +206,7 @@ public class ProcessUtil {
                 Object annotationObj = annotation.getAnnotation();
                 if (annotationObj instanceof BindInfo) {
                     description = ((BindInfo) annotationObj).getDocumentation();
+                    description = description.replaceAll("\\t\\r\\n", "");
                 }
             }
         }
