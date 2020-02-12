@@ -31,32 +31,25 @@ import com.sun.tools.xjc.reader.xmlschema.bindinfo.BindInfo;
 import com.sun.xml.xsom.XSAnnotation;
 import com.sun.xml.xsom.XSComponent;
 import com.sun.xml.xsom.XSElementDecl;
-import com.sun.xml.xsom.XSFacet;
 import com.sun.xml.xsom.XSParticle;
 import com.sun.xml.xsom.XSSimpleType;
 import com.sun.xml.xsom.XSTerm;
-import com.sun.xml.xsom.XmlString;
 import io.swagger.annotations.ApiModelProperty;
 
 import javax.xml.bind.annotation.XmlElement;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Logger;
 
 /**
  * @author redlab
  */
 public class ProcessUtil {
 
-    private Logger log = Logger.getLogger(this.getClass().getName());
-
-    private static final String NOTES = "notes";
-    private static final String REQUIRED = "required";
-    private static final String DATA_TYPE = "dataType";
     private static final String IS = "is";
-    private static final String VALUE = "value";
+
     private static final String GET = "get";
+
     private static final ProcessUtil myself = new ProcessUtil();
 
     private ProcessUtil() {
@@ -118,7 +111,7 @@ public class ProcessUtil {
      * @return
      */
     public boolean isRequiredByAnnotation(final JAnnotationUse annotation) {
-        return null != annotation && "true".equalsIgnoreCase(XJCHelper.getStringValueFromAnnotationMember(annotation, REQUIRED));
+        return null != annotation && "true".equalsIgnoreCase(XJCHelper.getStringValueFromAnnotationMember(annotation, ApiModelPropertyFields.REQUIRED));
     }
 
     /**
@@ -176,31 +169,41 @@ public class ProcessUtil {
     /**
      * @param implClass
      * @param targetClass
-     * @param m
+     * @param method
      * @param prefix
      * @param required
      * @param defaultValue
      * @param enums
      */
-    protected void internalAddMethodAnnotation(final JDefinedClass implClass, CClassInfo targetClass, final JMethod m, final String prefix,
+    protected void internalAddMethodAnnotation(final JDefinedClass implClass, CClassInfo targetClass,
+                                               final JMethod method, final String prefix,
                                                final boolean required,
                                                final String defaultValue, final Collection<EnumOutline> enums) {
-        JAnnotationUse apiProperty = m.annotate(ApiModelProperty.class);
-        String name = prepareNameFromMethod(m.name(), prefix);
+        JAnnotationUse apiProperty = method.annotate(ApiModelProperty.class);
+        String name = prepareNameFromMethod(method.name(), prefix);
+        populateDescription(targetClass, apiProperty, name);
+        populateAllowableValuesWithKnownEnums(method, enums, apiProperty);
+        populateRequired(required, apiProperty);
+        populateAllowableValuesWithMetadata(apiProperty, targetClass, name);
+        ExampleProcessUtil.addExample(apiProperty, defaultValue);
+    }
+
+    private void populateDescription(CClassInfo targetClass, JAnnotationUse apiProperty, String name) {
         String description = getDescription(targetClass, name);
-        apiProperty.param(VALUE, description);
+        apiProperty.param(ApiModelPropertyFields.VALUE, description);
+    }
+
+    private void populateRequired(boolean required, JAnnotationUse apiProperty) {
+        if (required) {
+            apiProperty.param(ApiModelPropertyFields.REQUIRED, true);
+        }
+    }
+
+    private void populateAllowableValuesWithKnownEnums(JMethod m, Collection<EnumOutline> enums, JAnnotationUse apiProperty) {
         EnumOutline eo = getKnownEnum(m.type().fullName(), enums);
-        String datatype;
         if (null != eo) {
             addAllowableValues(eo, apiProperty);
         }
-        if (required) {
-            apiProperty.param(REQUIRED, true);
-        }
-        if (null != defaultValue) {
-            apiProperty.param(NOTES, defaultValue);
-        }
-        addRestrictions(apiProperty, targetClass, name);
     }
 
     /**
@@ -242,7 +245,7 @@ public class ProcessUtil {
                 b.append(',');
             }
         }
-        apiProperty.param("allowableValues", b.toString());
+        apiProperty.param(ApiModelPropertyFields.ALLOWABLE_VALUES, b.toString());
     }
 
     /**
@@ -289,102 +292,31 @@ public class ProcessUtil {
     }
 
     /**
-     * Adds <xs:restriction>-s to {@link ApiModelProperty} (ie."pattern", "length" etc.)
+     * Adds <xs:restriction>-s to {@link ApiModelProperty}
      *
      * @param apiProperty
      * @param targetClass
      * @param propertyName
      */
-    private void addRestrictions(JAnnotationUse apiProperty, CClassInfo targetClass, String propertyName) {
+    private void populateAllowableValuesWithMetadata(JAnnotationUse apiProperty, CClassInfo targetClass, String propertyName) {
         CPropertyInfo property = targetClass.getProperty(propertyName);
         XSComponent schemaComponent = property.getSchemaComponent();
         if (schemaComponent instanceof XSParticle) {
             XSParticle particle = (XSParticle) schemaComponent;
             XSTerm xsTerm = particle.getTerm();
-            if (xsTerm != null && xsTerm instanceof XSElementDecl && ((XSElementDecl) xsTerm).getType() != null
-                    && ((XSElementDecl) xsTerm).getType().asSimpleType() != null) {
-                XSSimpleType xsSimpleType = ((XSElementDecl) xsTerm).getType().asSimpleType();
-                addLength(apiProperty, xsSimpleType);
-                XmlString defaultValue = ((XSElementDecl) xsTerm).getDefaultValue();
-                if (Objects.nonNull(defaultValue)) {
-                    apiProperty.param(ApiModelPropertyFields.EXAMPLE, defaultValue.toString());
-                }
-//                addExtremum(apiProperty, xsSimpleType, true);
-//                addExtremum(apiProperty, xsSimpleType, false);
-                String pattern = getFacetAsString(xsSimpleType, XSFacet.FACET_PATTERN);
-//                if (pattern != null) {
-//                    apiProperty.param(ApiModelPropertyFields.PATTERN, pattern);
-//                }
+            if (isXSElementDeclAndHasSimpleType(xsTerm)) {
+                XSElementDecl xsElementDecl = (XSElementDecl) xsTerm;
+                XSSimpleType xsSimpleType = xsElementDecl.getType().asSimpleType();
+                AllowableValuesProcessUtil.addLength(apiProperty, xsSimpleType);
+                AllowableValuesProcessUtil.addExtremum(apiProperty, xsSimpleType);
             }
         }
     }
 
-    private void addLength(JAnnotationUse apiProperty, XSSimpleType xsSimpleType) {
-        Integer length = getFacetAsInteger(xsSimpleType, XSFacet.FACET_LENGTH);
-        Integer maxLength;
-        Integer minLength;
-        if (length != null) {
-            maxLength = length;
-            minLength = length;
-        } else {
-            maxLength = getFacetAsInteger(xsSimpleType, XSFacet.FACET_MAXLENGTH);
-            minLength = getFacetAsInteger(xsSimpleType, XSFacet.FACET_MINLENGTH);
-        }
-        StringBuilder stringBuilder = new StringBuilder("range[");
-        if (minLength != null) {
-            stringBuilder.append(minLength);
-        } else {
-            stringBuilder.append("-infinity");
-        }
-        stringBuilder.append(", ");
-        if (maxLength != null) {
-            stringBuilder.append(maxLength);
-        } else {
-            stringBuilder.append("infinity");
-        }
-        stringBuilder.append("]");
-        apiProperty.param(ApiModelPropertyFields.ALLOWABLE_VALES, stringBuilder.toString());
+    private boolean isXSElementDeclAndHasSimpleType(XSTerm xsTerm) {
+        return xsTerm instanceof XSElementDecl
+                && Objects.nonNull(((XSElementDecl) xsTerm).getType())
+                && Objects.nonNull(((XSElementDecl) xsTerm).getType().asSimpleType());
     }
 
-    private void addExtremum(JAnnotationUse apiProperty, XSSimpleType xsSimpleType, boolean isMaximum) {
-//        String extremum = getFacetAsString(xsSimpleType, isMaximum ? XSFacet.FACET_MAXEXCLUSIVE : XSFacet.FACET_MINEXCLUSIVE);
-//        try {
-//            Boolean exlusive = true;
-//            if (extremum == null) {
-//                exlusive = false;
-//                extremum = getFacetAsString(xsSimpleType, isMaximum ? XSFacet.FACET_MAXINCLUSIVE : XSFacet.FACET_MININCLUSIVE);
-//            }
-//            if (extremum != null) {
-//                BigDecimal value = new BigDecimal(extremum);
-//                apiProperty.param(isMaximum ? SchemaFields.MAXIMUM : SchemaFields.MINIMUM, extremum);
-//                apiProperty.param(isMaximum ? SchemaFields.EXCLUSIVE_MAXIMUM : SchemaFields.EXCLUSIVE_MINIMUM, exlusive);
-//            }
-//        } catch (NumberFormatException e) {
-//            log.warning(String.format("Extremum: [%s] could not be set for SimpleType:[%s], since it cannot be parsed as BigDecimal!", extremum,
-//                    xsSimpleType));
-//        }
-    }
-
-    private Integer getFacetAsInteger(XSSimpleType xsSimpleType, String facetName) {
-        String stringValue = getFacetAsString(xsSimpleType, facetName);
-        if (stringValue != null) {
-            try {
-                return Integer.valueOf(stringValue);
-            } catch (NumberFormatException e) {
-                log.warning(
-                        String.format("Could not obtain facet : [%s]=[%s] as Integer from SimpleType:[%s]!", facetName, stringValue, xsSimpleType));
-                return null;
-            }
-        }
-        return null;
-    }
-
-    private String getFacetAsString(XSSimpleType xsSimpleType, String facetName) {
-        XSFacet facet = xsSimpleType.getFacet(facetName);
-        String value = null;
-        if (facet != null) {
-            value = facet.getValue().value;
-        }
-        return value;
-    }
 }
