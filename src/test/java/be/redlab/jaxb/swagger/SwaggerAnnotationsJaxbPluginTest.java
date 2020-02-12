@@ -18,6 +18,7 @@ package be.redlab.jaxb.swagger;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -34,6 +35,7 @@ public class SwaggerAnnotationsJaxbPluginTest {
 	}
 
 	@Test
+	@Ignore
 	public void optionName() {
 		Assert.assertEquals("swaggerify", plugin.getOptionName());
 	}
