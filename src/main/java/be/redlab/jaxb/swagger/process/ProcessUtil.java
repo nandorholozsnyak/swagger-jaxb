@@ -184,7 +184,7 @@ public class ProcessUtil {
         ExampleProcessUtil.addExample(apiProperty, defaultValue);
     }
 
-    private void populateDescription(CClassInfo targetClass, JAnnotationUse apiProperty, String name) {
+    protected void populateDescription(CClassInfo targetClass, JAnnotationUse apiProperty, String name) {
         String description = getDescription(targetClass, name);
         apiProperty.param(ApiModelPropertyFields.VALUE, description);
     }
@@ -227,9 +227,6 @@ public class ProcessUtil {
         return description;
     }
 
-    /**
-     * @param apiProperty
-     */
     private static void addAllowableValues(final EnumOutline eo, final JAnnotationUse apiProperty) {
         List<EnumConstantOutline> constants = eo.constants;
         StringBuilder b = new StringBuilder();
