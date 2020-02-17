@@ -16,29 +16,27 @@
 
 package be.redlab.jaxb.swagger;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author redlab
- *
  */
 public class SwaggerAnnotationsJaxbPluginTest {
 
-	private SwaggerAnnotationsJaxbPlugin plugin;
+    private SwaggerAnnotationsJaxbPlugin plugin;
 
-	@Before
-	public void setup() {
-		plugin = new SwaggerAnnotationsJaxbPlugin();
-	}
+    @BeforeEach
+    public void setup() {
+        plugin = new SwaggerAnnotationsJaxbPlugin();
+    }
 
-	@Test
-	@Ignore
-	public void optionName() {
-		Assert.assertEquals("swaggerify", plugin.getOptionName());
-	}
+    @Test
+    public void optionName() {
+        assertThat("swaggerify").isEqualTo(plugin.getOptionName());
+    }
 
 
 }

@@ -7,6 +7,7 @@ import com.sun.xml.xsom.XSSimpleType;
 import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 /**
@@ -83,6 +84,13 @@ public final class AllowableValuesProcessUtil {
 
     private static void populateAllowableValueField(JAnnotationUse apiProperty, Object minLength, Object maxLength, boolean inclusiveMin, boolean inclusiveMax) {
         StringBuilder stringBuilder = new StringBuilder("range");
+        appendMinLength(stringBuilder, minLength, inclusiveMin);
+        stringBuilder.append(", ");
+        appendMaxLength(stringBuilder, maxLength, inclusiveMax);
+        apiProperty.param(ApiModelPropertyFields.ALLOWABLE_VALUES, stringBuilder.toString());
+    }
+
+    private static void appendMinLength(StringBuilder stringBuilder, Object minLength, boolean inclusiveMin) {
         if (inclusiveMin) {
             stringBuilder.append("[");
         } else {
@@ -93,7 +101,9 @@ public final class AllowableValuesProcessUtil {
         } else {
             stringBuilder.append("-infinity");
         }
-        stringBuilder.append(", ");
+    }
+
+    private static void appendMaxLength(StringBuilder stringBuilder, Object maxLength, boolean inclusiveMax) {
         if (maxLength != null) {
             stringBuilder.append(maxLength);
         } else {
@@ -104,31 +114,34 @@ public final class AllowableValuesProcessUtil {
         } else {
             stringBuilder.append(")");
         }
-        apiProperty.param(ApiModelPropertyFields.ALLOWABLE_VALUES, stringBuilder.toString());
     }
 
     private static Integer getFacetAsInteger(XSSimpleType xsSimpleType, String facetName) {
-        String stringValue = getFacetAsString(xsSimpleType, facetName);
-        if (stringValue != null) {
-            try {
-                return Integer.valueOf(stringValue);
-            } catch (NumberFormatException e) {
-                log.warning(String.format("Could not obtain facet : [%s]=[%s] as Integer from SimpleType:[%s]!", facetName, stringValue, xsSimpleType));
-                return null;
-            }
-        }
-        return null;
+        return Optional.ofNullable(getFacetAsString(xsSimpleType, facetName))
+            .map(stringValue -> getIntegerValue(xsSimpleType, facetName, stringValue))
+            .orElse(null);
     }
 
     private static String getFacetAsString(XSSimpleType xsSimpleType, String facetName) {
-        XSFacet facet = xsSimpleType.getFacet(facetName);
-        String value = null;
-        if (facet != null) {
-            value = facet.getValue().value;
-        }
-        return value;
+        return Optional.ofNullable(xsSimpleType.getFacet(facetName))
+            .map(XSFacet::getValue)
+            .map(xmlString -> xmlString.value)
+            .orElse(null);
     }
 
+    private static Integer getIntegerValue(XSSimpleType xsSimpleType, String facetName, String stringValue) {
+        try {
+            return Integer.valueOf(stringValue);
+        } catch (NumberFormatException e) {
+            String format = String.format("Could not obtain facet : [%s]=[%s] as Integer from SimpleType:[%s]!", facetName, stringValue, xsSimpleType);
+            log.warning(format);
+            return null;
+        }
+    }
+
+    /**
+     * Inner class to represent an Extremum object with a value and a flag which indicates if it is an inclusive or exclusive range.
+     */
     private static class Extremum {
 
         private final String value;

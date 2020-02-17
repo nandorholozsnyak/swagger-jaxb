@@ -27,12 +27,11 @@ import java.util.Map;
 
 /**
  * @author redlab
- *
  */
 public final class NoProcessStrategy extends AbstractProcessStrategy {
-	@Override
-	public void doProcess(final JDefinedClass implClass, CClassInfo targetClass, final Collection<JMethod> methods, final Map<String, JFieldVar> fields,
-			final Collection<EnumOutline> enums) {
+    @Override
+    public void doProcess(final JDefinedClass implClass, CClassInfo targetClass, final Collection<JMethod> methods, final Map<String, JFieldVar> fields,
+                          final Collection<EnumOutline> enums) {
 
-	}
+    }
 }

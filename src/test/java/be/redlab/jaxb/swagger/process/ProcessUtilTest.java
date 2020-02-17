@@ -16,25 +16,22 @@
 
 package be.redlab.jaxb.swagger.process;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author redlab
- *
  */
 public class ProcessUtilTest {
 
-	@Test
-	@Ignore
-	public void prepareNameFromGetter() {
-		Assert.assertEquals("aString", ProcessUtil.getInstance().prepareNameFromMethod("getAString", "get"));
-	}
+    @Test
+    public void prepareNameFromGetter() {
+        assertThat("aString").isEqualTo(ProcessUtil.getInstance().prepareNameFromMethod("getAString", "get"));
+    }
 
-	@Test
-	@Ignore
-	public void prepareNameFromBooleanGetter() {
-		Assert.assertEquals("aString", ProcessUtil.getInstance().prepareNameFromMethod("isAString", "is"));
-	}
+    @Test
+    public void prepareNameFromBooleanGetter() {
+        assertThat("aString").isEqualTo(ProcessUtil.getInstance().prepareNameFromMethod("isAString", "is"));
+    }
 }

@@ -64,11 +64,9 @@ public class ProcessUtil {
      * @return
      */
     public boolean validFieldMods(final int mods) {
-        if ((mods & JMod.FINAL) != 0 || (mods & JMod.STATIC) != 0
-                || (mods & JMod.ABSTRACT) != 0 || (mods & JMod.NATIVE) != 0 || (mods & JMod.TRANSIENT) != 0
-                || (mods & JMod.VOLATILE) != 0)
-            return false;
-        return true;
+        return (mods & JMod.FINAL) == 0 && (mods & JMod.STATIC) == 0
+            && (mods & JMod.ABSTRACT) == 0 && (mods & JMod.NATIVE) == 0 && (mods & JMod.TRANSIENT) == 0
+            && (mods & JMod.VOLATILE) == 0;
 
     }
 
@@ -103,7 +101,7 @@ public class ProcessUtil {
      */
     public boolean isRequired(final JFieldVar jFieldVar) {
         return jFieldVar.type().isPrimitive()
-                || isRequiredByAnnotation(XJCHelper.getAnnotation(jFieldVar.annotations(), XmlElement.class));
+            || isRequiredByAnnotation(XJCHelper.getAnnotation(jFieldVar.annotations(), XmlElement.class));
     }
 
     /**
@@ -139,10 +137,8 @@ public class ProcessUtil {
      * @return
      */
     public boolean validMethodMods(final int mods) {
-        if (((mods & JMod.PROTECTED) != 0 || (mods & JMod.PRIVATE) != 0 || (mods & JMod.FINAL) != 0 || (mods & JMod.STATIC) != 0
-                || (mods & JMod.ABSTRACT) != 0 || (mods & JMod.NATIVE) != 0 || (mods & JMod.TRANSIENT) != 0 || (mods & JMod.VOLATILE) != 0))
-            return false;
-        return true;
+        return ((mods & JMod.PROTECTED) == 0 && (mods & JMod.PRIVATE) == 0 && (mods & JMod.FINAL) == 0 && (mods & JMod.STATIC) == 0
+            && (mods & JMod.ABSTRACT) == 0 && (mods & JMod.NATIVE) == 0 && (mods & JMod.TRANSIENT) == 0 && (mods & JMod.VOLATILE) == 0);
     }
 
     /**
@@ -315,8 +311,8 @@ public class ProcessUtil {
 
     private boolean isXSElementDeclAndHasSimpleType(XSTerm xsTerm) {
         return xsTerm instanceof XSElementDecl
-                && Objects.nonNull(((XSElementDecl) xsTerm).getType())
-                && Objects.nonNull(((XSElementDecl) xsTerm).getType().asSimpleType());
+            && Objects.nonNull(((XSElementDecl) xsTerm).getType())
+            && Objects.nonNull(((XSElementDecl) xsTerm).getType().asSimpleType());
     }
 
 }
