@@ -43,7 +43,9 @@ public final class FieldProcessStrategy extends AbstractProcessStrategy {
                 processUtil.addMethodAnnotationForField(implClass, targetClass, e.getValue(), enums);
             }
         }
+
         for (JMethod jm : methods) {
+            //TODO - Maybe catch position value here with an indexed for loop to populate position attribute, just debug the order of the methods collection
             int mods = jm.mods().getValue();
             JAnnotationUse annotation = XJCHelper.getAnnotation(jm.annotations(), XmlElement.class);
             if (processUtil.validMethodMods(mods) && null != annotation) {
