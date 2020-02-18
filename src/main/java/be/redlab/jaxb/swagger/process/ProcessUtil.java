@@ -25,7 +25,6 @@ import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.tools.xjc.model.CClassInfo;
 import com.sun.tools.xjc.model.CPropertyInfo;
-import com.sun.tools.xjc.outline.EnumConstantOutline;
 import com.sun.tools.xjc.outline.EnumOutline;
 import com.sun.tools.xjc.reader.xmlschema.bindinfo.BindInfo;
 import com.sun.xml.xsom.XSAnnotation;
@@ -38,7 +37,6 @@ import io.swagger.annotations.ApiModelProperty;
 
 import javax.xml.bind.annotation.XmlElement;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -178,10 +176,13 @@ public class ProcessUtil {
         JAnnotationUse apiProperty = method.annotate(ApiModelProperty.class);
         String name = prepareNameFromMethod(method.name(), prefix);
         populateDescription(targetClass, apiProperty, name);
-        populateAllowableValuesWithKnownEnums(method, enums, apiProperty);
         populateRequired(required, apiProperty);
-        populateAllowableValuesWithMetadata(apiProperty, targetClass, name);
         ExampleProcessUtil.addExample(apiProperty, defaultValue);
+        if (Objects.nonNull(enums) && !enums.isEmpty()) {
+            populateAllowableValuesWithKnownEnums(method, enums, apiProperty);
+        } else {
+            populateAllowableValuesWithMetadata(apiProperty, targetClass, name);
+        }
     }
 
     protected void populateDescription(CClassInfo targetClass, JAnnotationUse apiProperty, String name) {
@@ -196,10 +197,7 @@ public class ProcessUtil {
     }
 
     private void populateAllowableValuesWithKnownEnums(JMethod m, Collection<EnumOutline> enums, JAnnotationUse apiProperty) {
-        EnumOutline eo = getKnownEnum(m.type().fullName(), enums);
-        if (null != eo) {
-            addAllowableValues(eo, apiProperty);
-        }
+        EnumUtil.populateAllowableValuesWithKnownEnums(m, enums, apiProperty);
     }
 
     /**
@@ -225,20 +223,6 @@ public class ProcessUtil {
             }
         }
         return description;
-    }
-
-    private static void addAllowableValues(final EnumOutline eo, final JAnnotationUse apiProperty) {
-        List<EnumConstantOutline> constants = eo.constants;
-        StringBuilder b = new StringBuilder();
-        int size = constants.size();
-        int classNameLength = eo.clazz.fullName().length() + 1;
-        for (int i = 0; i < size; i++) {
-            b.append(constants.get(i).constRef.getName().substring(classNameLength));
-            if (i < size - 1) {
-                b.append(',');
-            }
-        }
-        apiProperty.param(ApiModelPropertyFields.ALLOWABLE_VALUES, b.toString());
     }
 
     /**
@@ -268,20 +252,6 @@ public class ProcessUtil {
             b.append(name.substring(1));
         }
         return b.toString();
-    }
-
-    /**
-     * @param clazz
-     * @param enums
-     * @return
-     */
-    public EnumOutline getKnownEnum(final String clazz, final Collection<EnumOutline> enums) {
-        for (EnumOutline eo : enums) {
-            if (eo.clazz.fullName().equals(clazz)) {
-                return eo;
-            }
-        }
-        return null;
     }
 
     /**
