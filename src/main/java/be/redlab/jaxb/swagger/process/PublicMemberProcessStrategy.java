@@ -30,6 +30,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.IntStream;
 
 /**
  * @author redlab
@@ -38,18 +39,22 @@ public final class PublicMemberProcessStrategy extends AbstractProcessStrategy {
     @Override
     public void doProcess(final JDefinedClass implClass, CClassInfo targetClass, final Collection<JMethod> methods, final Map<String, JFieldVar> fields,
                           final Collection<EnumOutline> enums) {
-        for (JMethod jm : methods) {
-            int mods = jm.mods().getValue();
-            if (processUtil.validMethodMods(mods) && null == XJCHelper.getAnnotation(jm.annotations(), XmlTransient.class)
+        JMethod[] jMethods = methods.toArray(new JMethod[0]);
+        IntStream.range(0, methods.size())
+            .forEach(value -> {
+                JMethod jm = jMethods[value];
+                int mods = jm.mods().getValue();
+                if (processUtil.validMethodMods(mods) && null == XJCHelper.getAnnotation(jm.annotations(), XmlTransient.class)
                     && null == XJCHelper.getAnnotation(jm.annotations(), ApiModelProperty.class)) {
-                JAnnotationUse annotation = XJCHelper.getAnnotation(jm.annotations(), XmlElement.class);
-                processUtil.addMethodAnnotation(implClass, targetClass, jm, processUtil.isRequiredByAnnotation(annotation), null, enums);
-            }
-        }
+                    JAnnotationUse annotation = XJCHelper.getAnnotation(jm.annotations(), XmlElement.class);
+                    processUtil.addMethodAnnotation(implClass, targetClass, jm, processUtil.isRequiredByAnnotation(annotation), null, enums, value);
+                }
+            });
+        int position = 0;
         for (Entry<String, JFieldVar> e : fields.entrySet()) {
             int mods = e.getValue().mods().getValue();
             if (processUtil.validFieldMods(mods) && null == XJCHelper.getAnnotation(e.getValue().annotations(), XmlTransient.class)) {
-                processUtil.addMethodAnnotationForField(implClass, targetClass, e.getValue(), enums);
+                processUtil.addMethodAnnotationForField(implClass, targetClass, e.getValue(), enums, position++);
             }
         }
     }

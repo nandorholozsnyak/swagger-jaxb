@@ -73,11 +73,12 @@ public class ProcessUtil {
      * @param targetClass
      * @param jFieldVar
      * @param enums
+     * @param position
      */
-    public void addMethodAnnotationForField(final JDefinedClass implClass, CClassInfo targetClass, final JFieldVar jFieldVar, final Collection<EnumOutline> enums) {
+    public void addMethodAnnotationForField(final JDefinedClass implClass, CClassInfo targetClass, final JFieldVar jFieldVar, final Collection<EnumOutline> enums, int position) {
         JMethod jm = getCorrespondingMethod(implClass, jFieldVar.name());
         if (null != jm) {
-            addMethodAnnotation(implClass, targetClass, jm, isRequired(jFieldVar), getDefault(jFieldVar), enums);
+            addMethodAnnotation(implClass, targetClass, jm, isRequired(jFieldVar), getDefault(jFieldVar), enums, position);
         }
     }
 
@@ -148,14 +149,15 @@ public class ProcessUtil {
      * @param required
      * @param defaultValue
      * @param enums
+     * @param position
      */
     public void addMethodAnnotation(final JDefinedClass o, CClassInfo t, final JMethod m, final boolean required, final String defaultValue,
-                                    final Collection<EnumOutline> enums) {
+                                    final Collection<EnumOutline> enums, int position) {
         if (null == XJCHelper.getAnnotation(m.annotations(), ApiModelProperty.class)) {
             if (isValidMethod(m, GET)) {
-                internalAddMethodAnnotation(o, t, m, GET, required, defaultValue, enums);
+                internalAddMethodAnnotation(o, t, m, GET, required, defaultValue, enums, position);
             } else if (isValidMethod(m, IS)) {
-                internalAddMethodAnnotation(o, t, m, IS, required, defaultValue, enums);
+                internalAddMethodAnnotation(o, t, m, IS, required, defaultValue, enums, position);
             }
         }
     }
@@ -168,11 +170,12 @@ public class ProcessUtil {
      * @param required
      * @param defaultValue
      * @param enums
+     * @param position
      */
     protected void internalAddMethodAnnotation(final JDefinedClass implClass, CClassInfo targetClass,
                                                final JMethod method, final String prefix,
                                                final boolean required,
-                                               final String defaultValue, final Collection<EnumOutline> enums) {
+                                               final String defaultValue, final Collection<EnumOutline> enums, int position) {
         JAnnotationUse apiProperty = method.annotate(ApiModelProperty.class);
         String name = prepareNameFromMethod(method.name(), prefix);
         populateDescription(targetClass, apiProperty, name);
@@ -183,6 +186,7 @@ public class ProcessUtil {
         } else {
             populateAllowableValuesWithMetadata(apiProperty, targetClass, name);
         }
+        apiProperty.param(ApiModelPropertyFields.POSITION, position);
     }
 
     protected void populateDescription(CClassInfo targetClass, JAnnotationUse apiProperty, String name) {
