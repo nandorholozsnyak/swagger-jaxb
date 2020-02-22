@@ -19,17 +19,19 @@ package be.redlab.jaxb.swagger.process;
 import be.redlab.jaxb.swagger.ProcessStrategy;
 import be.redlab.jaxb.swagger.XJCHelper;
 import com.sun.codemodel.JAnnotationUse;
+import com.sun.codemodel.JClass;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JFieldVar;
 import com.sun.codemodel.JMethod;
+import com.sun.codemodel.JType;
 import com.sun.tools.xjc.model.CClassInfo;
 import com.sun.tools.xjc.outline.EnumOutline;
+import io.swagger.annotations.ApiModelProperty;
 
 import javax.xml.bind.annotation.XmlElement;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.IntStream;
 
 public abstract class AbstractProcessStrategy implements ProcessStrategy {
 
@@ -63,7 +65,7 @@ public abstract class AbstractProcessStrategy implements ProcessStrategy {
 
     private void processFields(JDefinedClass implClass, CClassInfo targetClass, Map<String, JFieldVar> fields, Collection<EnumOutline> enums) {
         if (Objects.nonNull(fields) && !fields.isEmpty()) {
-            int position = 0;
+            int position = getLastPosition(implClass);
             for (Map.Entry<String, JFieldVar> e : fields.entrySet()) {
                 JFieldVar jFieldVar = e.getValue();
                 if (isValidForFieldProcess(jFieldVar)) {
@@ -75,15 +77,39 @@ public abstract class AbstractProcessStrategy implements ProcessStrategy {
 
     private void processMethods(JDefinedClass implClass, CClassInfo targetClass, Collection<JMethod> methods, Collection<EnumOutline> enums) {
         if (Objects.nonNull(methods) && !methods.isEmpty()) {
-            JMethod[] jMethods = methods.toArray(new JMethod[0]);
-            IntStream.range(0, methods.size())
-                .forEach(index -> {
-                    JMethod jMethod = jMethods[index];
-                    if (isValidForMethodProcess(jMethod)) {
-                        JAnnotationUse xmlElementAnnotation = XJCHelper.getAnnotation(jMethod.annotations(), XmlElement.class);
-                        processUtil.addMethodAnnotation(implClass, targetClass, jMethod, processUtil.isRequiredByAnnotation(xmlElementAnnotation), null, enums, index);
-                    }
-                });
+            int position = getLastPosition(implClass);
+            for (JMethod method : methods) {
+                if (isValidForMethodProcess(method)) {
+                    JAnnotationUse xmlElementAnnotation = XJCHelper.getAnnotation(method.annotations(), XmlElement.class);
+                    processUtil.addMethodAnnotation(implClass, targetClass, method, processUtil.isRequiredByAnnotation(xmlElementAnnotation), null, enums, position++);
+                }
+            }
         }
+    }
+
+    private int getLastPosition(JDefinedClass implClass) {
+        if (Objects.nonNull(implClass)) {
+            int base = 0;
+            JClass superClass = implClass._extends();
+            if (Objects.nonNull(superClass) && superClass instanceof JDefinedClass) {
+                base = getLastPosition((JDefinedClass) superClass);
+            }
+            return base + getLastPositionOfClass(implClass);
+        }
+        return 0;
+    }
+
+    private int getLastPositionOfClass(JDefinedClass implClass) {
+        Collection<JMethod> methods = implClass.methods();
+        return (int) methods.stream()
+            .flatMap(jMethod -> jMethod.annotations().stream())
+            .map(JAnnotationUse::getAnnotationClass)
+            .map(JType::fullName)
+            .filter(this::isApiModelProperty)
+            .count();
+    }
+
+    private boolean isApiModelProperty(String fullName) {
+        return fullName.equals(ApiModelProperty.class.getName());
     }
 }
