@@ -18,47 +18,29 @@ package be.redlab.jaxb.swagger.process;
 
 import be.redlab.jaxb.swagger.XJCHelper;
 import com.sun.codemodel.JAnnotationUse;
-import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JFieldVar;
 import com.sun.codemodel.JMethod;
-import com.sun.tools.xjc.model.CClassInfo;
-import com.sun.tools.xjc.outline.EnumOutline;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.stream.IntStream;
 
 /**
  * @author redlab
  */
 public final class FieldProcessStrategy extends AbstractProcessStrategy {
+
     @Override
-    public void doProcess(final JDefinedClass implClass, final CClassInfo targetClass, final Collection<JMethod> methods, final Map<String, JFieldVar> fields,
-                          final Collection<EnumOutline> enums) {
-        int position = 0;
-        for (Entry<String, JFieldVar> e : fields.entrySet()) {
-            int mods = e.getValue().mods().getValue();
-            if (processUtil.validFieldMods(mods) && null == XJCHelper.getAnnotation(e.getValue().annotations(), XmlTransient.class)) {
-                processUtil.addMethodAnnotationForField(implClass, targetClass, e.getValue(), enums, position++);
-            }
-        }
-
-        if (Objects.nonNull(methods)) {
-            JMethod[] jMethods = methods.toArray(new JMethod[0]);
-            IntStream.range(0, methods.size())
-                .forEach(index -> {
-                    JMethod jMethod = jMethods[index];
-                    int mods = jMethod.mods().getValue();
-                    JAnnotationUse annotation = XJCHelper.getAnnotation(jMethod.annotations(), XmlElement.class);
-                    if (processUtil.validMethodMods(mods) && null != annotation) {
-                        processUtil.addMethodAnnotation(implClass, targetClass, jMethod, processUtil.isRequiredByAnnotation(annotation), null, enums, index);
-                    }
-                });
-        }
-
+    public boolean isValidForFieldProcess(JFieldVar jFieldVar) {
+        int mods = jFieldVar.mods().getValue();
+        JAnnotationUse xmlTransientAnnotation = XJCHelper.getAnnotation(jFieldVar.annotations(), XmlTransient.class);
+        return processUtil.validFieldMods(mods) && null == xmlTransientAnnotation;
     }
+
+    @Override
+    public boolean isValidForMethodProcess(JMethod jMethod) {
+        int mods = jMethod.mods().getValue();
+        JAnnotationUse xmlElementAnnotation = XJCHelper.getAnnotation(jMethod.annotations(), XmlElement.class);
+        return processUtil.validMethodMods(mods) && null != xmlElementAnnotation;
+    }
+
 }

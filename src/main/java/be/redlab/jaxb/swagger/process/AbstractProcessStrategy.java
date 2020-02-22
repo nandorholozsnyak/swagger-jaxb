@@ -17,22 +17,24 @@
 package be.redlab.jaxb.swagger.process;
 
 import be.redlab.jaxb.swagger.ProcessStrategy;
+import be.redlab.jaxb.swagger.XJCHelper;
+import com.sun.codemodel.JAnnotationUse;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JFieldVar;
 import com.sun.codemodel.JMethod;
 import com.sun.tools.xjc.model.CClassInfo;
 import com.sun.tools.xjc.outline.EnumOutline;
 
+import javax.xml.bind.annotation.XmlElement;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.IntStream;
 
 public abstract class AbstractProcessStrategy implements ProcessStrategy {
 
     protected final ProcessUtil processUtil;
 
-    /**
-     *
-     */
     public AbstractProcessStrategy() {
         this.processUtil = ProcessUtil.getInstance();
     }
@@ -49,14 +51,39 @@ public abstract class AbstractProcessStrategy implements ProcessStrategy {
         doProcess(implClass, targetClass, methods, fields, enums);
     }
 
-    /**
-     * @param implClass
-     * @param targetClass
-     * @param methods
-     * @param fields
-     */
-    public abstract void doProcess(JDefinedClass implClass, CClassInfo targetClass, Collection<JMethod> methods, Map<String, JFieldVar> fields,
-                                   Collection<EnumOutline> enums);
+    protected void doProcess(JDefinedClass implClass, CClassInfo targetClass, Collection<JMethod> methods, Map<String, JFieldVar> fields,
+                             Collection<EnumOutline> enums) {
+        processFields(implClass, targetClass, fields, enums);
+        processMethods(implClass, targetClass, methods, enums);
+    }
 
+    public abstract boolean isValidForFieldProcess(JFieldVar jFieldVar);
 
+    public abstract boolean isValidForMethodProcess(JMethod jMethod);
+
+    private void processFields(JDefinedClass implClass, CClassInfo targetClass, Map<String, JFieldVar> fields, Collection<EnumOutline> enums) {
+        if (Objects.nonNull(fields) && !fields.isEmpty()) {
+            int position = 0;
+            for (Map.Entry<String, JFieldVar> e : fields.entrySet()) {
+                JFieldVar jFieldVar = e.getValue();
+                if (isValidForFieldProcess(jFieldVar)) {
+                    processUtil.addMethodAnnotationForField(implClass, targetClass, jFieldVar, enums, position++);
+                }
+            }
+        }
+    }
+
+    private void processMethods(JDefinedClass implClass, CClassInfo targetClass, Collection<JMethod> methods, Collection<EnumOutline> enums) {
+        if (Objects.nonNull(methods) && !methods.isEmpty()) {
+            JMethod[] jMethods = methods.toArray(new JMethod[0]);
+            IntStream.range(0, methods.size())
+                .forEach(index -> {
+                    JMethod jMethod = jMethods[index];
+                    if (isValidForMethodProcess(jMethod)) {
+                        JAnnotationUse xmlElementAnnotation = XJCHelper.getAnnotation(jMethod.annotations(), XmlElement.class);
+                        processUtil.addMethodAnnotation(implClass, targetClass, jMethod, processUtil.isRequiredByAnnotation(xmlElementAnnotation), null, enums, index);
+                    }
+                });
+        }
+    }
 }

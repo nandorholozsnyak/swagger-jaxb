@@ -123,9 +123,9 @@ public class ProcessUtil {
         }
         String get = GET + b.toString();
         String is = IS + b.toString();
-        for (JMethod m : implClass.methods()) {
-            if (get.equals(m.name()) || is.equals(m.name())) {
-                return m;
+        for (JMethod jMethod : implClass.methods()) {
+            if (get.equals(jMethod.name()) || is.equals(jMethod.name())) {
+                return jMethod;
             }
         }
         return null;
@@ -163,48 +163,6 @@ public class ProcessUtil {
     }
 
     /**
-     * @param implClass
-     * @param targetClass
-     * @param method
-     * @param prefix
-     * @param required
-     * @param defaultValue
-     * @param enums
-     * @param position
-     */
-    protected void internalAddMethodAnnotation(final JDefinedClass implClass, CClassInfo targetClass,
-                                               final JMethod method, final String prefix,
-                                               final boolean required,
-                                               final String defaultValue, final Collection<EnumOutline> enums, int position) {
-        JAnnotationUse apiProperty = method.annotate(ApiModelProperty.class);
-        String name = prepareNameFromMethod(method.name(), prefix);
-        populateDescription(targetClass, apiProperty, name);
-        populateRequired(required, apiProperty);
-        ExampleProcessUtil.addExample(apiProperty, defaultValue);
-        if (Objects.nonNull(enums) && !enums.isEmpty()) {
-            populateAllowableValuesWithKnownEnums(method, enums, apiProperty);
-        } else {
-            populateAllowableValuesWithMetadata(apiProperty, targetClass, name);
-        }
-        apiProperty.param(ApiModelPropertyFields.POSITION, position);
-    }
-
-    protected void populateDescription(CClassInfo targetClass, JAnnotationUse apiProperty, String name) {
-        String description = getDescription(targetClass, name);
-        apiProperty.param(ApiModelPropertyFields.VALUE, description);
-    }
-
-    private void populateRequired(boolean required, JAnnotationUse apiProperty) {
-        if (required) {
-            apiProperty.param(ApiModelPropertyFields.REQUIRED, true);
-        }
-    }
-
-    private void populateAllowableValuesWithKnownEnums(JMethod m, Collection<EnumOutline> enums, JAnnotationUse apiProperty) {
-        EnumUtil.populateAllowableValuesWithKnownEnums(m, enums, apiProperty);
-    }
-
-    /**
      * Extract value from {@code <xs:annotation><xs:documentation>} for property if exists.
      *
      * @param targetClass  the TargetClass
@@ -218,12 +176,9 @@ public class ProcessUtil {
         XSComponent schemaComponent = property.getSchemaComponent();
         if (schemaComponent instanceof XSParticle) {
             XSAnnotation annotation = ((XSParticle) schemaComponent).getTerm().getAnnotation();
-            if (annotation != null) {
-                Object annotationObj = annotation.getAnnotation();
-                if (annotationObj instanceof BindInfo) {
-                    description = ((BindInfo) annotationObj).getDocumentation();
-                    description = description.replaceAll("\\t\\r\\n", "");
-                }
+            if (isBindInfo(annotation)) {
+                description = ((BindInfo) annotation.getAnnotation()).getDocumentation();
+                description = description.replaceAll("\\t\\r\\n", "");
             }
         }
         return description;
@@ -237,7 +192,7 @@ public class ProcessUtil {
      * @param prefix the prefix
      * @return true if valid, false otherwise
      */
-    public boolean isValidMethod(final JMethod m, final String prefix) {
+    private boolean isValidMethod(final JMethod m, final String prefix) {
         return m.name().length() > prefix.length() && m.name().startsWith(prefix);
     }
 
@@ -248,7 +203,7 @@ public class ProcessUtil {
      * @param prefix
      * @return the name without get and with first character set to lowerCase
      */
-    public String prepareNameFromMethod(final String getterName, final String prefix) {
+    protected String prepareNameFromMethod(final String getterName, final String prefix) {
         String name = getterName.substring(prefix.length());
         StringBuilder b = new StringBuilder();
         b.append(Character.toLowerCase(name.charAt(0)));
@@ -260,10 +215,6 @@ public class ProcessUtil {
 
     /**
      * Adds <xs:restriction>-s to {@link ApiModelProperty}
-     *
-     * @param apiProperty
-     * @param targetClass
-     * @param propertyName
      */
     private void populateAllowableValuesWithMetadata(JAnnotationUse apiProperty, CClassInfo targetClass, String propertyName) {
         CPropertyInfo property = targetClass.getProperty(propertyName);
@@ -278,6 +229,42 @@ public class ProcessUtil {
                 AllowableValuesProcessUtil.addExtremum(apiProperty, xsSimpleType);
             }
         }
+    }
+
+    private void internalAddMethodAnnotation(final JDefinedClass implClass, CClassInfo targetClass,
+                                             final JMethod method, final String prefix,
+                                             final boolean required,
+                                             final String defaultValue, final Collection<EnumOutline> enums, int position) {
+        JAnnotationUse apiProperty = method.annotate(ApiModelProperty.class);
+        String name = prepareNameFromMethod(method.name(), prefix);
+        populateDescription(targetClass, apiProperty, name);
+        populateRequired(required, apiProperty);
+        ExampleProcessUtil.addExample(apiProperty, defaultValue);
+        if (Objects.nonNull(enums) && !enums.isEmpty()) {
+            populateAllowableValuesWithKnownEnums(method, enums, apiProperty);
+        } else {
+            populateAllowableValuesWithMetadata(apiProperty, targetClass, name);
+        }
+        apiProperty.param(ApiModelPropertyFields.POSITION, position);
+    }
+
+    private void populateDescription(CClassInfo targetClass, JAnnotationUse apiProperty, String name) {
+        String description = getDescription(targetClass, name);
+        apiProperty.param(ApiModelPropertyFields.VALUE, description);
+    }
+
+    private void populateRequired(boolean required, JAnnotationUse apiProperty) {
+        if (required) {
+            apiProperty.param(ApiModelPropertyFields.REQUIRED, true);
+        }
+    }
+
+    private void populateAllowableValuesWithKnownEnums(JMethod m, Collection<EnumOutline> enums, JAnnotationUse apiProperty) {
+        EnumUtil.populateAllowableValuesWithKnownEnums(m, enums, apiProperty);
+    }
+
+    private boolean isBindInfo(XSAnnotation annotation) {
+        return annotation != null && annotation.getAnnotation() instanceof BindInfo;
     }
 
     private boolean isXSElementDeclAndHasSimpleType(XSTerm xsTerm) {

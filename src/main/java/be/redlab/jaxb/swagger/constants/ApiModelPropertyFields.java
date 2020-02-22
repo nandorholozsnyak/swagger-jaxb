@@ -4,6 +4,8 @@ public class ApiModelPropertyFields {
 
     public static final String VALUE = "value";
 
+    public static final String DESCRIPTION = "description";
+
     public static final String ALLOWABLE_VALUES = "allowableValues";
 
     public static final String REQUIRED = "required";
