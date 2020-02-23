@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+            xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+            xmlns="http://rodnan.co/example"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://rodnan.co/example"
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified"
+            jaxb:version="2.0"
+            jaxb:extensionBindingPrefixes="xjc">
+
+    <xsd:simpleType name="FeedbackStarType">
+        <xsd:restriction base="xsd:decimal">
+            <xsd:minInclusive value="0"/>
+            <xsd:maxInclusive value="10"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="FeedbackExclusiveStarType">
+        <xsd:restriction base="xsd:decimal">
+            <xsd:minExclusive value="-1"/>
+            <xsd:maxExclusive value="11"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="FeedbackMixedStarType">
+        <xsd:restriction base="xsd:decimal">
+            <xsd:minExclusive value="-1"/>
+            <xsd:maxInclusive value="10"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:complexType name="FeedbackType">
+        <xsd:annotation>
+            <xsd:documentation xml:lang="en">Class represents a feedback</xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="simpleFeedback" type="FeedbackStarType">
+                <xsd:annotation>
+                    <xsd:documentation xml:lang="en">Simple feedback</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="exclusiveFeedback" type="FeedbackExclusiveStarType">
+                <xsd:annotation>
+                    <xsd:documentation xml:lang="en">Feedback with exclusive ranges</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="mixedFeedback" type="FeedbackMixedStarType">
+                <xsd:annotation>
+                    <xsd:documentation xml:lang="en">Mixed feedback with inclusive and exclusive values</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:simpleType name="String100-255LengthType">
+        <xsd:restriction base="xsd:string">
+            <xsd:minLength value="100"/>
+            <xsd:maxLength value="255"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="String255LengthType">
+        <xsd:restriction base="xsd:string">
+            <xsd:maxLength value="255"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="UUIDType">
+        <xsd:restriction base="xsd:string">
+            <xsd:length value="36"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:complexType name="OrderType">
+        <xsd:annotation>
+            <xsd:documentation xml:lang="en">Class represents an order</xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="uuid" type="UUIDType">
+                <xsd:annotation>
+                    <xsd:documentation xml:lang="en">Order UUID</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="address" type="String255LengthType">
+                <xsd:annotation>
+                    <xsd:documentation xml:lang="en">Address to send the order</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="cargoIdentifier" type="String100-255LengthType">
+                <xsd:annotation>
+                    <xsd:documentation xml:lang="en">Identifier of the order cargo</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="UserType">
+        <xsd:annotation>
+            <xsd:documentation xml:lang="en">Class represents a user</xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="firstName" type="xsd:string">
+                <xsd:annotation>
+                    <xsd:documentation xml:lang="en">First name of the user</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="lastName" type="xsd:string" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation xml:lang="en">Last name of the user</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:simpleType name="UserStatusType">
+        <xsd:annotation>
+            <xsd:documentation xml:lang="en">Status of the user</xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="ACTIVE"/>
+            <xsd:enumeration value="INACTIVE"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:complexType name="NewUserType">
+        <xsd:annotation>
+            <xsd:documentation xml:lang="en">Class represents a new user</xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="status" type="UserStatusType">
+                <xsd:annotation>
+                    <xsd:documentation xml:lang="en">Status of the user</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="LoginResponse">
+        <xsd:annotation>
+            <xsd:documentation xml:lang="en">Class represents a login response</xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="token" type="xsd:string" default="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c">
+                <xsd:annotation>
+                    <xsd:documentation xml:lang="en">Generated JWT token</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="SuperDuperClass">
+        <xsd:annotation>
+            <xsd:documentation xml:lang="en">SuperDuperClass</xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="superDuperClassField" type="xsd:string">
+                <xsd:annotation>
+                    <xsd:documentation xml:lang="en">Super duper class field</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="SuperClass">
+        <xsd:annotation>
+            <xsd:documentation xml:lang="en">SuperClass</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="SuperDuperClass">
+                <xsd:sequence>
+                    <xsd:element name="superClassField" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:documentation xml:lang="en">Super class field</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="DerivedClass">
+        <xsd:annotation>
+            <xsd:documentation xml:lang="en">DerivedClass</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="SuperClass">
+                <xsd:sequence>
+                    <xsd:element name="derivedClassField" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:documentation xml:lang="en">Derived class field</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+</xsd:schema>
