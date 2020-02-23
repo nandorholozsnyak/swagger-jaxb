@@ -3,7 +3,44 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>co.rodnan</groupId>
     <artifactId>swagger-jaxb</artifactId>
-    <version>1.0</version>
+    <version>1.0-SNAPSHOT</version>
+
+    <name>Swagger JAXB</name>
+    <description>XJC Plugin to add Swagger Annotations to your swagger generated JAXB classes, see github for info</description>
+
+    <developers>
+        <developer>
+            <name>Nandor Holozsnyak</name>
+            <id>nandorholozsnyak</id>
+            <email>nandorholozsnyak@gmail.com</email>
+        </developer>
+    </developers>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
+    <scm>
+        <connection>scm:git:git@github.com:nandorholozsnyak/swagger-jaxb.git</connection>
+        <developerConnection>scm:git:git@github.com:nandorholozsnyak/swagger-jaxb.git</developerConnection>
+        <url>git@github.com:nandorholozsnyak/swagger-jaxb.git</url>
+    </scm>
+    <url>https://github.com/nandorholozsnyak/swagger-jaxb</url>
+    <organization>
+        <name>nandorholozsnyak</name>
+    </organization>
+    <issueManagement>
+        <system>github issues</system>
+        <url>https://github.com/nandorholozsnyak/swagger-jaxb/issues</url>
+    </issueManagement>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -79,22 +116,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <scm>
-        <connection>scm:git:git@github.com:nandorholozsnyak/swagger-jaxb.git</connection>
-        <developerConnection>scm:git:git@github.com:nandorholozsnyak/swagger-jaxb.git</developerConnection>
-        <url>git@github.com:nandorholozsnyak/swagger-jaxb.git</url>
-    </scm>
-    <name>Swagger JAXB</name>
-    <description>XJC Plugin to add Swagger Annotations to your swagger generated JAXB classes, see github for info
-    </description>
-    <url>https://github.com/nandorholozsnyak/swagger-jaxb</url>
-    <organization>
-        <name>nandorholozsnyak</name>
-    </organization>
-    <issueManagement>
-        <system>github issues</system>
-        <url>https://github.com/nandorholozsnyak/swagger-jaxb/issues</url>
-    </issueManagement>
     <licenses>
         <license>
             <name>Apache 2</name>
@@ -105,30 +126,6 @@
     </licenses>
     <build>
         <plugins>
-            <!--            <plugin>-->
-            <!--                <groupId>org.jacoco</groupId>-->
-            <!--                <artifactId>jacoco-maven-plugin</artifactId>-->
-            <!--                <version>0.7.8</version>-->
-            <!--                <configuration>-->
-            <!--                    <destFile>${basedir}/target/jacoco.exec</destFile>-->
-            <!--                    <dataFile>${basedir}/target/jacoco.exec</dataFile>-->
-            <!--                </configuration>-->
-            <!--                <executions>-->
-            <!--                    <execution>-->
-            <!--                        <id>jacoco-initialize</id>-->
-            <!--                        <goals>-->
-            <!--                            <goal>prepare-agent</goal>-->
-            <!--                        </goals>-->
-            <!--                    </execution>-->
-            <!--                    <execution>-->
-            <!--                        <id>jacoco-site</id>-->
-            <!--                        <phase>package</phase>-->
-            <!--                        <goals>-->
-            <!--                            <goal>report</goal>-->
-            <!--                        </goals>-->
-            <!--                    </execution>-->
-            <!--                </executions>-->
-            <!--            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -196,21 +193,4 @@
             </build>
         </profile>
     </profiles>
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
-    <developers>
-        <developer>
-            <name>Nandor Holozsnyak</name>
-            <id>nandorholozsnyak</id>
-            <email>nandorholozsnyak@gmail.com</email>
-        </developer>
-    </developers>
 </project>
