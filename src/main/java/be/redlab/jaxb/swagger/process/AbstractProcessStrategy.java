@@ -49,14 +49,9 @@ public abstract class AbstractProcessStrategy implements ProcessStrategy {
      */
     public final void process(final JDefinedClass implClass, CClassInfo targetClass, final Collection<EnumOutline> enums) {
         Collection<JMethod> methods = implClass.methods();
-        Map<String, JFieldVar> fields = implClass.fields();
-        doProcess(implClass, targetClass, methods, fields, enums);
-    }
-
-    protected void doProcess(JDefinedClass implClass, CClassInfo targetClass, Collection<JMethod> methods, Map<String, JFieldVar> fields,
-                             Collection<EnumOutline> enums) {
-        processFields(implClass, targetClass, fields, enums);
         processMethods(implClass, targetClass, methods, enums);
+        Map<String, JFieldVar> fields = implClass.fields();
+        processFields(implClass, targetClass, fields, enums);
     }
 
     public abstract boolean isValidForFieldProcess(JFieldVar jFieldVar);

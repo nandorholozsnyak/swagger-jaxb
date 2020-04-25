@@ -18,6 +18,7 @@ package be.redlab.jaxb.swagger.process;
 
 import be.redlab.jaxb.swagger.XJCHelper;
 import be.redlab.jaxb.swagger.constants.ApiModelPropertyFields;
+import be.redlab.jaxb.swagger.evaluator.XsdField;
 import com.sun.codemodel.JAnnotationUse;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JFieldVar;
@@ -76,9 +77,19 @@ public class ProcessUtil {
      * @param position
      */
     public void addMethodAnnotationForField(final JDefinedClass implClass, CClassInfo targetClass, final JFieldVar jFieldVar, final Collection<EnumOutline> enums, int position) {
-        JMethod jm = getCorrespondingMethod(implClass, jFieldVar.name());
-        if (null != jm) {
-            addMethodAnnotation(implClass, targetClass, jm, isRequired(jFieldVar), getDefault(jFieldVar), enums, position);
+        JMethod jMethod = getCorrespondingMethod(implClass, jFieldVar.name());
+        if (null != jMethod) {
+            addMethodAnnotation(targetClass, jMethod, isRequired(jFieldVar), getDefault(jFieldVar), enums, position);
+        }
+    }
+
+    public XsdField createXsdFieldBy(final JDefinedClass jDefinedClass, CClassInfo cClassInfo, final JMethod jMethod, final Collection<EnumOutline> enums, int position) {
+        if (null == XJCHelper.getAnnotation(jMethod.annotations(), ApiModelProperty.class)) {
+            if (isValidMethod(jMethod, GET)) {
+                internalAddMethodAnnotation(cClassInfo, jMethod, GET, required, defaultValue, enums, position);
+            } else if (isValidMethod(jMethod, IS)) {
+                internalAddMethodAnnotation(cClassInfo, jMethod, IS, required, defaultValue, enums, position);
+            }
         }
     }
 
@@ -143,21 +154,20 @@ public class ProcessUtil {
     /**
      * Add method level annotation {@link ApiModelProperty} if not already on the method
      *
-     * @param o            the ClassOutline
-     * @param t            the TargetClass
-     * @param m            the method to add annotation on
+     * @param cClassInfo    the TargetClass
+     * @param jMethod       the method to add annotation on
      * @param required
      * @param defaultValue
      * @param enums
      * @param position
      */
-    public void addMethodAnnotation(final JDefinedClass o, CClassInfo t, final JMethod m, final boolean required, final String defaultValue,
+    public void addMethodAnnotation(CClassInfo cClassInfo, final JMethod jMethod, final boolean required, final String defaultValue,
                                     final Collection<EnumOutline> enums, int position) {
-        if (null == XJCHelper.getAnnotation(m.annotations(), ApiModelProperty.class)) {
-            if (isValidMethod(m, GET)) {
-                internalAddMethodAnnotation(o, t, m, GET, required, defaultValue, enums, position);
-            } else if (isValidMethod(m, IS)) {
-                internalAddMethodAnnotation(o, t, m, IS, required, defaultValue, enums, position);
+        if (null == XJCHelper.getAnnotation(jMethod.annotations(), ApiModelProperty.class)) {
+            if (isValidMethod(jMethod, GET)) {
+                internalAddMethodAnnotation(cClassInfo, jMethod, GET, required, defaultValue, enums, position);
+            } else if (isValidMethod(jMethod, IS)) {
+                internalAddMethodAnnotation(cClassInfo, jMethod, IS, required, defaultValue, enums, position);
             }
         }
     }
@@ -231,7 +241,31 @@ public class ProcessUtil {
         }
     }
 
-    private void internalAddMethodAnnotation(final JDefinedClass implClass, CClassInfo targetClass,
+    private XsdField createInternalXsdField(CClassInfo targetClass,
+                                            JMethod method,
+                                            String prefix,
+                                            boolean required,
+                                            String defaultValue,
+                                            Collection<EnumOutline> enums,
+                                            int position) {
+        JAnnotationUse apiProperty = method.annotate(ApiModelProperty.class);
+        String name = prepareNameFromMethod(method.name(), prefix);
+        populateDescription(targetClass, apiProperty, name);
+        populateRequired(required, apiProperty);
+        ExampleProcessUtil.addExample(apiProperty, defaultValue);
+        if (Objects.nonNull(enums) && !enums.isEmpty()) {
+            populateAllowableValuesWithKnownEnums(method, enums, apiProperty);
+        } else {
+            populateAllowableValuesWithMetadata(apiProperty, targetClass, name);
+        }
+        apiProperty.param(ApiModelPropertyFields.POSITION, position);
+        return XsdField.builder()
+            .position(position)
+            .required(required)
+            .build();
+    }
+
+    private void internalAddMethodAnnotation(CClassInfo targetClass,
                                              final JMethod method, final String prefix,
                                              final boolean required,
                                              final String defaultValue, final Collection<EnumOutline> enums, int position) {
